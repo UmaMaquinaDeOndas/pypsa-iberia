@@ -1,0 +1,32 @@
+# Pixi / Python
+.pixi/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+
+# PyPSA-Eur artifacts (large, regenerable)
+results/
+cutouts/
+resources/
+benchmarks/
+logs/
+*.nc
+
+# But DO keep small custom data files
+!data/custom/*.csv
+!data/custom/*.geojson
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Solver
+*.lp
+*.mps
+*.sol

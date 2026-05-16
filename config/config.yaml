@@ -1,0 +1,59 @@
+# PyPSA-Iberia baseline configuration
+# This is the "v0" config — default clustering, electricity only, overnight 2030.
+# Used to validate the data pipeline before custom busmap.
+
+run:
+  name: "iberia-v0-default"
+  shared_resources:
+    policy: "base"
+
+foresight: overnight
+
+countries: ['PT', 'ES', 'FR', 'DE', 'IT', 'BE', 'GB', 'CH']
+
+snapshots:
+  start: "2019-01-01"
+  end:   "2020-01-01"
+  resolution: 3h        # 3-hourly during development; switch to 1h for final runs
+
+scenario:
+  clusters: [12]
+  opts: ['Co2L0.5']      # 50% CO2 reduction vs 1990; loose enough to be tractable
+  planning_horizons: [2030]
+
+clustering:
+  focus_weights:
+    PT: 0.50    # ~6 nodes in Portugal
+    ES: 0.20    # ~2-3 nodes in Spain
+    FR: 0.08
+    DE: 0.06
+    IT: 0.06
+    BE: 0.04
+    GB: 0.03
+    CH: 0.03
+
+electricity:
+  co2limit_enable: true
+  extendable_carriers:
+    Generator: [solar, onwind, offwind-ac, offwind-dc, offwind-float, OCGT, CCGT]
+    StorageUnit: [battery]
+    Store: [H2]
+    Link: [H2 pipeline]
+  renewable_carriers: [solar, onwind, offwind-ac, offwind-dc, offwind-float, hydro]
+  conventional_carriers: [nuclear, oil, OCGT, CCGT, coal, lignite, geothermal, biomass]
+
+costs:
+  year: 2030
+  version: v0.14.0-2020-v2
+  social_discountrate: 0.02
+  fill_values:
+    discount rate: 0.07
+    FOM: 0
+    VOM: 0
+    lifetime: 25
+
+solving:
+  solver:
+    name: highs
+    options: highs-default
+  mem: 16000      # 16 GB; bump up if you have more
