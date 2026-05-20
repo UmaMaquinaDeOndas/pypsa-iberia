@@ -10,7 +10,6 @@ cutouts/
 resources/
 benchmarks/
 logs/
-*.nc
 
 # But DO keep small custom data files
 !data/custom/*.csv
