@@ -1,0 +1,1545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PyPSA-Eur · The Pipeline · Iberia Edition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300..900,0..100&family=Sora:wght@300..700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     PyPSA-Eur pipeline visualiser
+     Dark, editorial-technical aesthetic — control-room ink + amber
+     ============================================================ */
+
+  :root {
+    --bg:        #0d0f14;
+    --bg-elev:  #14171f;
+    --bg-card:  #181b24;
+    --line:      #262932;
+    --line-soft: #1d2029;
+    --ink:       #ede7d3;
+    --ink-dim:   #a39e8c;
+    --ink-mute:  #6b6857;
+    --amber:     #ffb000;
+    --amber-dim: #c08400;
+    --cyan:      #54c5e8;
+    --hot:       #ff5e3a;
+    --green:     #8fc46a;
+    --violet:    #b39cf2;
+
+    --serif: 'Fraunces', 'Times New Roman', serif;
+    --sans:  'Sora', system-ui, sans-serif;
+    --mono:  'JetBrains Mono', ui-monospace, monospace;
+
+    --maxw: 1280px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-weight: 300;
+    line-height: 1.55;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    background-image:
+      radial-gradient(ellipse 800px 600px at 80% -10%, rgba(255,176,0,0.08), transparent 60%),
+      radial-gradient(ellipse 700px 500px at -10% 30%, rgba(84,197,232,0.06), transparent 60%);
+    background-attachment: fixed;
+  }
+
+  ::selection { background: var(--amber); color: var(--bg); }
+
+  /* ------ Typography ------ */
+  h1, h2, h3, h4 { font-family: var(--serif); font-weight: 400; letter-spacing: -0.02em; }
+  h1 { font-size: clamp(3rem, 8vw, 7.2rem); line-height: 0.94; margin: 0; }
+  h2 { font-size: clamp(2rem, 4vw, 3.4rem); line-height: 1.05; margin: 0 0 1rem; }
+  h3 { font-size: 1.6rem; line-height: 1.15; margin: 0 0 0.6rem; }
+  h4 { font-size: 1.1rem; margin: 0 0 0.4rem; font-family: var(--sans); font-weight: 500; letter-spacing: 0; }
+  p  { margin: 0 0 1rem; }
+  a  { color: var(--amber); text-decoration: none; border-bottom: 1px dotted var(--amber-dim); }
+  a:hover { color: var(--bg); background: var(--amber); }
+
+  .mono { font-family: var(--mono); font-size: 0.85em; }
+  .small { font-size: 0.8rem; color: var(--ink-dim); }
+  .label { font-family: var(--mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--ink-dim); }
+
+  /* ------ Layout ------ */
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 2rem; }
+  section { padding: 6rem 0; border-top: 1px solid var(--line); position: relative; }
+  section:first-of-type { border-top: 0; }
+  .section-num {
+    font-family: var(--mono); font-size: 0.75rem; color: var(--amber);
+    letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 2.5rem;
+    display: flex; align-items: center; gap: 1rem;
+  }
+  .section-num::after {
+    content: ''; flex: 1; height: 1px; background: linear-gradient(to right, var(--amber-dim), transparent);
+    max-width: 200px;
+  }
+
+  /* ============================================================
+     NAV BAR
+     ============================================================ */
+  nav.top {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(13,15,20,0.85); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line);
+  }
+  nav.top .wrap {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-top: 1rem; padding-bottom: 1rem;
+  }
+  nav.top .brand {
+    font-family: var(--serif); font-size: 1.4rem; letter-spacing: -0.01em;
+  }
+  nav.top .brand span { color: var(--amber); }
+  nav.top ul { display: flex; gap: 1.8rem; list-style: none; margin: 0; padding: 0; }
+  nav.top a { color: var(--ink-dim); border: 0; font-family: var(--mono); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; }
+  nav.top a:hover { color: var(--amber); background: transparent; }
+  @media (max-width: 720px) { nav.top ul { display: none; } }
+
+  /* ============================================================
+     HERO
+     ============================================================ */
+  .hero { padding: 8rem 0 7rem; position: relative; overflow: hidden; }
+  .hero::before {
+    content: ''; position: absolute; inset: 0;
+    background-image:
+      linear-gradient(to right, var(--line-soft) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--line-soft) 1px, transparent 1px);
+    background-size: 80px 80px;
+    opacity: 0.5;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+    pointer-events: none;
+  }
+  .hero > * { position: relative; }
+  .hero .eyebrow {
+    font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.25em;
+    text-transform: uppercase; color: var(--amber); margin-bottom: 2rem;
+    display: flex; align-items: center; gap: 0.8rem;
+  }
+  .hero .eyebrow::before { content: '◆'; color: var(--amber); }
+  .hero h1 em { font-style: italic; color: var(--amber); font-weight: 300; }
+  .hero .lede {
+    max-width: 680px; font-size: 1.25rem; line-height: 1.55; color: var(--ink-dim);
+    margin-top: 2.5rem; font-weight: 300;
+  }
+  .hero .lede strong { color: var(--ink); font-weight: 400; }
+  .hero .meta {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 2rem; margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--line);
+  }
+  .hero .meta div .label { display: block; margin-bottom: 0.4rem; }
+  .hero .meta div .val { font-family: var(--serif); font-size: 1.6rem; color: var(--ink); }
+  .hero .meta div .val small { color: var(--ink-dim); font-size: 0.9rem; font-family: var(--sans); }
+
+  /* ============================================================
+     OVERVIEW STRIP
+     ============================================================ */
+  .strip {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 0;
+    border: 1px solid var(--line); border-radius: 2px;
+    background: var(--bg-elev);
+  }
+  .strip > div {
+    padding: 2rem 1.8rem; border-right: 1px solid var(--line);
+  }
+  .strip > div:last-child { border-right: 0; }
+  .strip h4 { color: var(--amber); margin-bottom: 0.6rem; font-family: var(--mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.15em; }
+  .strip p { font-family: var(--serif); font-size: 1.25rem; line-height: 1.25; margin: 0; }
+  @media (max-width: 900px) {
+    .strip { grid-template-columns: repeat(2, 1fr); }
+    .strip > div:nth-child(2) { border-right: 0; }
+    .strip > div:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+  }
+  @media (max-width: 540px) {
+    .strip { grid-template-columns: 1fr; }
+    .strip > div { border-right: 0; border-bottom: 1px solid var(--line); }
+    .strip > div:last-child { border-bottom: 0; }
+  }
+
+  /* ============================================================
+     DATA CATALOGUE
+     ============================================================ */
+  .cat-intro {
+    display: grid; grid-template-columns: 1fr 1.4fr; gap: 4rem; margin-bottom: 4rem;
+  }
+  @media (max-width: 900px) { .cat-intro { grid-template-columns: 1fr; gap: 2rem; } }
+
+  .cat-group { margin-bottom: 4rem; }
+  .cat-group-head {
+    display: flex; align-items: baseline; gap: 1.2rem;
+    margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line);
+  }
+  .cat-group-head .num {
+    font-family: var(--mono); font-size: 0.85rem; color: var(--amber);
+    background: rgba(255,176,0,0.08); padding: 0.2rem 0.5rem; border: 1px solid var(--amber-dim);
+    border-radius: 2px;
+  }
+  .cat-group-head h3 { font-family: var(--serif); font-size: 1.8rem; flex: 1; margin: 0; }
+  .cat-group-head .count { color: var(--ink-dim); font-family: var(--mono); font-size: 0.8rem; }
+
+  .ds-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 0; }
+  .ds {
+    border-top: 1px solid var(--line-soft);
+    padding: 1.4rem 1.6rem;
+    transition: background 0.2s ease;
+    position: relative;
+    border-right: 1px solid var(--line-soft);
+  }
+  .ds:hover { background: var(--bg-card); }
+  .ds:hover .ds-name { color: var(--amber); }
+  .ds-name {
+    font-family: var(--mono); font-size: 0.9rem; font-weight: 500;
+    color: var(--ink); transition: color 0.2s ease;
+    display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.6rem;
+  }
+  .ds-name::before { content: ''; width: 6px; height: 6px; background: var(--amber); border-radius: 50%; }
+  .ds-owner { font-size: 0.78rem; color: var(--ink-dim); margin-bottom: 0.5rem; font-style: italic; }
+  .ds-desc { font-size: 0.85rem; color: var(--ink-dim); line-height: 1.5; margin-bottom: 0.7rem; }
+  .ds-meta { display: flex; gap: 0.5rem; flex-wrap: wrap; font-family: var(--mono); font-size: 0.65rem; }
+  .ds-tag {
+    padding: 0.15rem 0.5rem; border: 1px solid var(--line);
+    background: var(--bg); color: var(--ink-dim);
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  .ds-tag.lic { color: var(--green); border-color: rgba(143,196,106,0.3); }
+  .ds-tag.iberia { color: var(--hot); border-color: rgba(255,94,58,0.4); background: rgba(255,94,58,0.06); }
+
+  /* alternate row tinting for variety */
+  .ds-grid .ds:nth-child(3n) { background: rgba(255,255,255,0.005); }
+  .ds-grid .ds:nth-child(3n):hover { background: var(--bg-card); }
+
+  /* ============================================================
+     PIPELINE
+     ============================================================ */
+  .pipe-intro {
+    display: grid; grid-template-columns: 1fr 1.4fr; gap: 4rem; margin-bottom: 5rem;
+  }
+  @media (max-width: 900px) { .pipe-intro { grid-template-columns: 1fr; gap: 2rem; } }
+
+  .stage {
+    position: relative; padding: 2.5rem 0 2.5rem 5rem;
+    border-left: 1px solid var(--line);
+    margin-left: 2rem;
+  }
+  .stage::before {
+    content: ''; position: absolute;
+    left: -7px; top: 3rem; width: 13px; height: 13px;
+    border-radius: 50%; background: var(--bg);
+    border: 2px solid var(--amber);
+    box-shadow: 0 0 0 4px var(--bg), 0 0 12px rgba(255,176,0,0.4);
+  }
+  .stage .stage-num {
+    position: absolute; left: -2rem; top: 2.4rem;
+    font-family: var(--mono); font-size: 0.75rem; color: var(--ink-mute);
+    transform: translateX(-100%);
+    padding-right: 1.2rem;
+  }
+  .stage h3 {
+    font-family: var(--serif); font-size: 2rem; margin-bottom: 0.4rem;
+    line-height: 1.05;
+  }
+  .stage h3 small {
+    display: block; font-family: var(--mono); font-size: 0.7rem;
+    color: var(--amber); letter-spacing: 0.15em; text-transform: uppercase;
+    margin-bottom: 0.6rem; font-weight: 500;
+  }
+  .stage .body { color: var(--ink-dim); max-width: 680px; }
+  .stage .body p { font-size: 0.95rem; }
+  .rules { margin-top: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .rule {
+    font-family: var(--mono); font-size: 0.75rem;
+    padding: 0.3rem 0.6rem;
+    background: var(--bg-card); border: 1px solid var(--line);
+    color: var(--ink); border-radius: 2px;
+  }
+  .rule::before { content: '▸ '; color: var(--amber); }
+
+  .io {
+    margin-top: 1.4rem; display: grid; grid-template-columns: auto 1fr; gap: 0.4rem 1rem;
+    font-family: var(--mono); font-size: 0.75rem; color: var(--ink-dim);
+    padding: 0.8rem 1rem; background: var(--bg-elev); border: 1px solid var(--line);
+    border-radius: 2px; max-width: 680px;
+  }
+  .io b { color: var(--cyan); font-weight: 500; }
+  .io span { white-space: nowrap; }
+  .io .v { white-space: normal; color: var(--ink-dim); }
+  .io .v code {
+    background: var(--bg); padding: 0.05em 0.4em; border-radius: 2px;
+    color: var(--ink); font-size: 0.95em;
+  }
+
+  @media (max-width: 720px) {
+    .stage { padding-left: 2rem; margin-left: 0; }
+    .stage .stage-num { position: static; transform: none; display: block; margin-bottom: 0.4rem; padding-right: 0; }
+  }
+
+  /* ============================================================
+     IBERIA SHOWCASE
+     ============================================================ */
+  .iberia-grid {
+    display: grid; grid-template-columns: 1.2fr 1fr; gap: 3rem; align-items: start;
+  }
+  @media (max-width: 900px) { .iberia-grid { grid-template-columns: 1fr; } }
+
+  .iberia-map {
+    background: var(--bg-elev);
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    padding: 1.5rem;
+    position: sticky; top: 100px;
+  }
+  .iberia-map svg { display: block; width: 100%; height: auto; }
+  .iberia-map .cap {
+    font-family: var(--mono); font-size: 0.7rem; color: var(--ink-dim);
+    text-transform: uppercase; letter-spacing: 0.1em; margin-top: 1rem;
+  }
+
+  .iberia-fact {
+    padding: 1.4rem 0; border-bottom: 1px solid var(--line);
+  }
+  .iberia-fact:last-child { border-bottom: 0; }
+  .iberia-fact h4 {
+    font-family: var(--mono); font-size: 0.7rem; color: var(--amber);
+    letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.5rem;
+  }
+  .iberia-fact p { font-family: var(--serif); font-size: 1.1rem; line-height: 1.4; color: var(--ink); margin: 0; }
+  .iberia-fact p span { color: var(--ink-dim); font-style: italic; }
+
+  /* ============================================================
+     OUTPUT / FOOTER
+     ============================================================ */
+  .output-tree {
+    font-family: var(--mono); font-size: 0.85rem;
+    background: var(--bg-elev); border: 1px solid var(--line);
+    padding: 2rem; border-radius: 2px;
+    line-height: 1.8;
+    overflow-x: auto;
+  }
+  .output-tree .dir { color: var(--cyan); }
+  .output-tree .file { color: var(--ink); }
+  .output-tree .key { color: var(--amber); }
+  .output-tree .com { color: var(--ink-mute); }
+
+  footer {
+    padding: 4rem 0 3rem; border-top: 1px solid var(--line);
+    font-size: 0.85rem; color: var(--ink-dim);
+  }
+  footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 2rem; }
+  footer a { color: var(--ink-dim); border-bottom-color: var(--line); }
+
+  /* ============================================================
+     ANIMATIONS
+     ============================================================ */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .hero h1     { animation: fadeUp 0.8s ease 0.1s both; }
+  .hero .lede  { animation: fadeUp 0.8s ease 0.25s both; }
+  .hero .meta  { animation: fadeUp 0.8s ease 0.4s both; }
+
+  /* Hero diagram pulse */
+  @keyframes pulse {
+    0%, 100% { opacity: 0.4; }
+    50%      { opacity: 1; }
+  }
+  .pulse-dot { animation: pulse 2.4s ease-in-out infinite; }
+</style>
+</head>
+<body>
+
+<!-- ===================================================
+     NAVIGATION
+     =================================================== -->
+<nav class="top">
+  <div class="wrap">
+    <div class="brand">PyPSA<span>·</span>Eur <span style="color:var(--ink-dim);font-size:0.9rem;font-family:var(--mono);letter-spacing:0.15em;">/ pipeline</span></div>
+    <ul>
+      <li><a href="#sources">Sources</a></li>
+      <li><a href="#pipeline">Pipeline</a></li>
+      <li><a href="#iberia">Iberia</a></li>
+      <li><a href="#output">Output</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ===================================================
+     HERO
+     =================================================== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Open energy-system modelling · Iberia edition</div>
+    <h1>
+      Forty datasets,<br>
+      thirty rules,<br>
+      <em>one continent.</em>
+    </h1>
+    <p class="lede">
+      <strong>PyPSA-Eur</strong> is the open, automated software pipeline that
+      assembles a load-flow-ready optimisation model of the European energy
+      system &mdash; <strong>electricity, heat, transport, industry, gas, hydrogen
+      and CO<sub>2</sub></strong> &mdash; from raw, freely available data. This page
+      walks the entire pipeline end-to-end and points at how it slices for
+      <strong style="color:var(--hot)">Portugal and Spain</strong>.
+    </p>
+    <div class="meta">
+      <div>
+        <span class="label">Spatial scope</span>
+        <span class="val">ENTSO-E <small>area</small></span>
+      </div>
+      <div>
+        <span class="label">Default voltage</span>
+        <span class="val">≥ 220 kV <small>AC + HVDC</small></span>
+      </div>
+      <div>
+        <span class="label">Grid topology</span>
+        <span class="val">OSM <small>(prebuilt)</small></span>
+      </div>
+      <div>
+        <span class="label">Clustered to</span>
+        <span class="val">50–250 <small>nodes</small></span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ===================================================
+     ANATOMY STRIP
+     =================================================== -->
+<section style="padding-top:3rem;padding-bottom:3rem;border-top:0;">
+  <div class="wrap">
+    <div class="strip">
+      <div>
+        <h4>1 · Retrieve</h4>
+        <p>Pull from primary sources or the Zenodo data bundle.</p>
+      </div>
+      <div>
+        <h4>2 · Build</h4>
+        <p>Clean, rasterise, intersect, allocate, simplify, cluster.</p>
+      </div>
+      <div>
+        <h4>3 · Compose</h4>
+        <p>Tie generators, demand and storage onto the clustered grid.</p>
+      </div>
+      <div>
+        <h4>4 · Solve</h4>
+        <p>Linear optimisation with PyPSA &mdash; capacities, flows, costs.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================================================
+     DATA SOURCES CATALOGUE
+     =================================================== -->
+<section id="sources">
+  <div class="wrap">
+    <div class="section-num">01 · Sources</div>
+    <div class="cat-intro">
+      <div>
+        <h2>The data behind every bus.</h2>
+      </div>
+      <div>
+        <p style="font-size:1.1rem;color:var(--ink-dim);">
+          PyPSA-Eur is uncompromisingly open. Every grid line, every power-plant pin,
+          every demand curve and every land-use mask is sourced from a published, citable
+          dataset &mdash; primary where possible, with stable archives mirrored on
+          <a href="https://data.pypsa.org">data.pypsa.org</a>. Below is the full inventory,
+          grouped by what it lets the model see. Tags marked <span class="ds-tag iberia" style="display:inline-block;">PT&nbsp;·&nbsp;ES</span> are the ones doing the heavy lifting for Iberia.
+        </p>
+      </div>
+    </div>
+
+    <!-- ===== A · GEOGRAPHY & ADMINISTRATIVE BOUNDARIES ===== -->
+    <div class="cat-group">
+      <div class="cat-group-head">
+        <span class="num">A</span>
+        <h3>Geography &amp; administrative boundaries</h3>
+        <span class="count">6 sources</span>
+      </div>
+      <div class="ds-grid">
+        <div class="ds">
+          <div class="ds-name">eu_nuts2021</div>
+          <div class="ds-owner">Eurostat</div>
+          <div class="ds-desc">NUTS-1/2/3 shapefiles (2021 vintage). Backbone for regional disaggregation of demand, GDP and population. Iberia: 7 NUTS2 in PT, 19 in ES.</div>
+          <div class="ds-meta"><span class="ds-tag lic">2011/833/EU</span><span class="ds-tag iberia">PT · ES</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">eu_nuts2013</div>
+          <div class="ds-owner">Eurostat</div>
+          <div class="ds-desc">Earlier NUTS vintage, retained for compatibility with older energy-balance series and JRC datasets.</div>
+          <div class="ds-meta"><span class="ds-tag lic">2011/833/EU</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">osm_boundaries</div>
+          <div class="ds-owner">OSM-Boundaries · GZC AB</div>
+          <div class="ds-desc">Administrative borders extracted from OSM. Fills gaps for non-EU countries (BA, MD, UA, XK).</div>
+          <div class="ds-meta"><span class="ds-tag lic">ODbL</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">eez</div>
+          <div class="ds-owner">Marine Regions</div>
+          <div class="ds-desc">Maritime Exclusive Economic Zones &mdash; sets the offshore wind playing field.</div>
+          <div class="ds-meta"><span class="ds-tag lic">CC-BY-4.0</span><span class="ds-tag iberia">PT · ES</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">lau_regions</div>
+          <div class="ds-owner">Eurostat</div>
+          <div class="ds-desc">Local Administrative Units used when building geothermal and fine-grained heat potentials.</div>
+          <div class="ds-meta"><span class="ds-tag">non-commercial</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">ons_lad</div>
+          <div class="ds-owner">UK ONS</div>
+          <div class="ds-desc">UK Local Authority Districts &mdash; UK&hyphen;specific replacement for NUTS3 post-Brexit.</div>
+          <div class="ds-meta"><span class="ds-tag lic">OGL v3.0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== B · ELECTRICAL GRID TOPOLOGY ===== -->
+    <div class="cat-group">
+      <div class="cat-group-head">
+        <span class="num">B</span>
+        <h3>Electrical grid &amp; topology</h3>
+        <span class="count">3 sources</span>
+      </div>
+      <div class="ds-grid">
+        <div class="ds">
+          <div class="ds-name">osm</div>
+          <div class="ds-owner">OpenStreetMap contributors</div>
+          <div class="ds-desc">HVAC ≥ 220 kV lines, HVDC links, substations. Default base network since v0.13. Covers REE (ES) and REN (PT) backbone, plus the Pyrenees interconnections.</div>
+          <div class="ds-meta"><span class="ds-tag lic">ODbL</span><span class="ds-tag iberia">PT · ES</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">tyndp</div>
+          <div class="ds-owner">ENTSO-E / ENTSO-G</div>
+          <div class="ds-desc">Ten-Year Network Development Plan. Optional layer of <em>planned</em> lines &mdash; e.g. the Biscay Gulf HVDC link between ES &amp; FR.</div>
+          <div class="ds-meta"><span class="ds-tag lic">CC-BY-4.0</span><span class="ds-tag iberia">PT · ES</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">bidding_zones_electricitymaps + entsoepy</div>
+          <div class="ds-owner">Electricity Maps · EnergieID</div>
+          <div class="ds-desc">Market bidding-zone polygons. MIBEL is one ES+PT zone for spot trading; model can split or aggregate accordingly.</div>
+          <div class="ds-meta"><span class="ds-tag lic">AGPL-3.0 / MIT</span><span class="ds-tag iberia">PT · ES</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== C · POWER PLANTS & INDUSTRIAL ASSETS ===== -->
+    <div class="cat-group">
+      <div class="cat-group-head">
+        <span class="num">C</span>
+        <h3>Power plants &amp; industrial assets</h3>
+        <span class="count">6 sources</span>
+      </div>
+      <div class="ds-grid">
+        <div class="ds">
+          <div class="ds-name">powerplants</div>
+          <div class="ds-owner">powerplantmatching</div>
+          <div class="ds-desc">The global power-plant inventory: nuclear, coal, gas, hydro, biomass, wind, solar &mdash; harmonised across GPPDT, JRC, OPSD, GEO, BEYONDCOAL, IRENASTAT and CARMA.</div>
+          <div class="ds-meta"><span class="ds-tag lic">CC-BY-4.0</span><span class="ds-tag iberia">PT · ES</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">gem_europe_gas_tracker</div>
+          <div class="ds-owner">Global Energy Monitor</div>
+          <div class="ds-desc">Methane &amp; hydrogen infrastructure: pipelines, LNG terminals, gas power plants, extraction sites. Captures Sines (PT) and Mugardos / Barcelona / Cartagena / Huelva / Bilbao LNG (ES).</div>
+          <div class="ds-meta"><span class="ds-tag lic">CC-BY-4.0</span><span class="ds-tag iberia">PT · ES</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">scigrid_gas</div>
+          <div class="ds-owner">DLR Networked Energy Systems</div>
+          <div class="ds-desc">IGGIELGN gas-transmission topology: pipe diameters, capacities, pressure, H-gas/L-gas, bidirectionality. Includes the Iberian network and the Pyrenean interconnections.</div>
+          <div class="ds-meta"><span class="ds-tag lic">CC-BY-4.0</span><span class="ds-tag iberia">PT · ES</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">hotmaps_industrial_sites</div>
+          <div class="ds-owner">Hotmaps consortium</div>
+          <div class="ds-desc">5000+ georeferenced energy-intensive sites with emissions, production capacity, fuel demand &amp; excess-heat potentials.</div>
+          <div class="ds-meta"><span class="ds-tag lic">CC-BY-4.0</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">gem_gspt</div>
+          <div class="ds-owner">Global Energy Monitor</div>
+          <div class="ds-desc">Global Steel Plant Tracker. ArcelorMittal Gijón / Avilés / Sestao are picked up here.</div>
+          <div class="ds-meta"><span class="ds-tag lic">CC-BY-4.0</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">gem_gcct</div>
+          <div class="ds-owner">Global Energy Monitor</div>
+          <div class="ds-desc">Global Cement &amp; Concrete Tracker.</div>
+          <div class="ds-meta"><span class="ds-tag lic">CC-BY-4.0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== D · WEATHER & CLIMATE ===== -->
+    <div class="cat-group">
+      <div class="cat-group-head">
+        <span class="num">D</span>
+        <h3>Weather &amp; climate (cutouts)</h3>
+        <span class="count">5 sources</span>
+      </div>
+      <div class="ds-grid">
+        <div class="ds">
+          <div class="ds-name">ERA5</div>
+          <div class="ds-owner">ECMWF · Copernicus CDS</div>
+          <div class="ds-desc">Reanalysis: pressure, 2-m temperature, soil temperature, surface roughness, runoff, 100-m wind speeds. Hourly, ~30 km grid. The wind &amp; runoff backbone.</div>
+          <div class="ds-meta"><span class="ds-tag">Copernicus</span><span class="ds-tag iberia">PT · ES</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">SARAH-3</div>
+          <div class="ds-owner">EUMETSAT CM&nbsp;SAF</div>
+          <div class="ds-desc">Satellite-based solar irradiation (top-of-atmosphere, direct, diffuse, albedo). Overrides ERA5 solar fields for higher fidelity &mdash; crucial in cloud-free Iberia.</div>
+          <div class="ds-meta"><span class="ds-tag">EUMETSAT</span><span class="ds-tag iberia">PT · ES</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">gebco</div>
+          <div class="ds-owner">GEBCO Compilation Group</div>
+          <div class="ds-desc">Global bathymetry on a 15-arc-second grid. Drives offshore-wind feasibility (fixed-bottom vs floating).</div>
+          <div class="ds-meta"><span class="ds-tag lic">Public domain</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">country_runoff</div>
+          <div class="ds-owner">Fabian Neumann · PyPSA</div>
+          <div class="ds-desc">Country-level daily runoff, used to rescale hydro availability outside the EIA-covered years.</div>
+          <div class="ds-meta"><span class="ds-tag lic">CC-BY-4.0</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">country_hdd</div>
+          <div class="ds-owner">Fabian Neumann · PyPSA</div>
+          <div class="ds-desc">Country-level heating-degree days, used to rescale heat demand to non-balance-statistics years.</div>
+          <div class="ds-meta"><span class="ds-tag lic">CC-BY-4.0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== E · LAND USE & EXCLUSION ===== -->
+    <div class="cat-group">
+      <div class="cat-group-head">
+        <span class="num">E</span>
+        <h3>Land use &amp; exclusion masks</h3>
+        <span class="count">5 sources</span>
+      </div>
+      <div class="ds-grid">
+        <div class="ds">
+          <div class="ds-name">corine</div>
+          <div class="ds-owner">Copernicus / EEA</div>
+          <div class="ds-desc">CORINE Land Cover (44 classes, 100 m). Excludes urban, forest, wetlands etc. from PV / wind buildable area.</div>
+          <div class="ds-meta"><span class="ds-tag">custom ≈ CC-BY</span><span class="ds-tag iberia">PT · ES</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">luisa_land_cover</div>
+          <div class="ds-owner">JRC · European Commission</div>
+          <div class="ds-desc">LUISA Base Map 2018 at 50 m. Higher resolution alternative / complement to CORINE.</div>
+          <div class="ds-meta"><span class="ds-tag lic">CC-BY-4.0</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">copernicus_land_cover</div>
+          <div class="ds-owner">Copernicus Global Land Service</div>
+          <div class="ds-desc">100 m global land cover. Used outside Europe and as cross-check.</div>
+          <div class="ds-meta"><span class="ds-tag lic">CC-BY-4.0</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">natura</div>
+          <div class="ds-owner">European Environment Agency</div>
+          <div class="ds-desc">Natura 2000 protected areas. Rasterised then subtracted from buildable land &mdash; this kills a lot of Spanish wind candidate sites.</div>
+          <div class="ds-meta"><span class="ds-tag lic">CC-BY-4.0</span><span class="ds-tag iberia">PT · ES</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">ship_raster</div>
+          <div class="ds-owner">World Bank</div>
+          <div class="ds-desc">Global shipping-traffic density. Reduces offshore-wind potential along shipping lanes (Strait of Gibraltar, Lisbon approach).</div>
+          <div class="ds-meta"><span class="ds-tag lic">CC-BY-4.0</span><span class="ds-tag iberia">PT · ES</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== F · DEMAND ===== -->
+    <div class="cat-group">
+      <div class="cat-group-head">
+        <span class="num">F</span>
+        <h3>Electricity demand</h3>
+        <span class="count">6 sources</span>
+      </div>
+      <div class="ds-grid">
+        <div class="ds">
+          <div class="ds-name">opsd_electricity_demand</div>
+          <div class="ds-owner">Open Power System Data</div>
+          <div class="ds-desc">Country-level hourly load time series. Default load source &mdash; gaps filled linearly &amp; by period copying.</div>
+          <div class="ds-meta"><span class="ds-tag">unknown</span><span class="ds-tag iberia">PT · ES</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">entsoe_electricity_demand</div>
+          <div class="ds-owner">ENTSO-E Transparency Platform</div>
+          <div class="ds-desc">Day-ahead total load. Direct from REE / REN feeds. Alternative to OPSD.</div>
+          <div class="ds-meta"><span class="ds-tag">unknown</span><span class="ds-tag iberia">PT · ES</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">synthetic_electricity_demand</div>
+          <div class="ds-owner">Frysztacki et al · Zenodo</div>
+          <div class="ds-desc">Weather-correlated synthetic load. Fills countries / years missing from OPSD / ENTSO-E.</div>
+          <div class="ds-meta"><span class="ds-tag lic">CC-BY-4.0</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">jrc_energy_atlas</div>
+          <div class="ds-owner">JRC · European Commission</div>
+          <div class="ds-desc">1 km × 1 km annual electricity-demand raster. Used to disaggregate national load onto buses where NUTS3 is missing.</div>
+          <div class="ds-meta"><span class="ds-tag lic">CC-BY-4.0</span><span class="ds-tag iberia">PT · ES</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">neso_electricity_demand</div>
+          <div class="ds-owner">NESO (UK)</div>
+          <div class="ds-desc">GB historic demand &mdash; UK-specific replacement for OPSD/ENTSO-E feeds.</div>
+          <div class="ds-meta"><span class="ds-tag">NESO Open Data v1.0</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">desnz_electricity_consumption</div>
+          <div class="ds-owner">UK DESNZ</div>
+          <div class="ds-desc">UK subnational electricity consumption, 2005–2023.</div>
+          <div class="ds-meta"><span class="ds-tag lic">OGL v3.0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== G · ENERGY BALANCES & SECTORS ===== -->
+    <div class="cat-group">
+      <div class="cat-group-head">
+        <span class="num">G</span>
+        <h3>Energy balances &amp; sector statistics</h3>
+        <span class="count">4 sources</span>
+      </div>
+      <div class="ds-grid">
+        <div class="ds">
+          <div class="ds-name">jrc_idees</div>
+          <div class="ds-owner">JRC · European Commission</div>
+          <div class="ds-desc">JRC-IDEES-2023. Per-member-state disaggregated energy &mdash; industry, buildings, transport, power &mdash; 2000-2021. The skeleton for sector coupling.</div>
+          <div class="ds-meta"><span class="ds-tag lic">CC-BY-4.0</span><span class="ds-tag iberia">PT · ES</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">eurostat_balances</div>
+          <div class="ds-owner">Eurostat</div>
+          <div class="ds-desc">Annual energy balances by country &amp; fuel. Scales JRC-IDEES to the latest year.</div>
+          <div class="ds-meta"><span class="ds-tag lic">CC-BY-4.0</span><span class="ds-tag iberia">PT · ES</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">eurostat_household_balances</div>
+          <div class="ds-owner">Eurostat</div>
+          <div class="ds-desc">Disaggregated household final-energy consumption: space heating, water heating, cooking.</div>
+          <div class="ds-meta"><span class="ds-tag lic">CC-BY-4.0</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">swiss_energy_balances</div>
+          <div class="ds-owner">Swiss Federal Office of Energy</div>
+          <div class="ds-desc">CH-specific feed since Switzerland isn't in Eurostat.</div>
+          <div class="ds-meta"><span class="ds-tag">custom</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== H · POPULATION & ECONOMY ===== -->
+    <div class="cat-group">
+      <div class="cat-group-head">
+        <span class="num">H</span>
+        <h3>Population, GDP &amp; demographics</h3>
+        <span class="count">7 sources</span>
+      </div>
+      <div class="ds-grid">
+        <div class="ds">
+          <div class="ds-name">nuts3_population</div>
+          <div class="ds-owner">Eurostat</div>
+          <div class="ds-desc">Population by NUTS3. Used to top-down distribute country load onto buses.</div>
+          <div class="ds-meta"><span class="ds-tag lic">CC-BY-4.0</span><span class="ds-tag iberia">PT · ES</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">gdp_per_capita</div>
+          <div class="ds-owner">Kummu et al. · Nature Sci. Data</div>
+          <div class="ds-desc">Gridded global GDP per capita 1990–2015 (PPP). Disaggregates demand by economic activity.</div>
+          <div class="ds-meta"><span class="ds-tag lic">CC-BY-4.0</span><span class="ds-tag iberia">PT · ES</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">population_count</div>
+          <div class="ds-owner">WorldPop</div>
+          <div class="ds-desc">Gridded population. Cross-checks NUTS3 and provides resolution outside Europe.</div>
+          <div class="ds-meta"><span class="ds-tag lic">CC-BY-4.0</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">worldbank_urban_population</div>
+          <div class="ds-owner">World Bank</div>
+          <div class="ds-desc">% urban population by country, for urban / rural heat-demand splits.</div>
+          <div class="ds-meta"><span class="ds-tag lic">CC-BY-4.0</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">jrc_ardeco</div>
+          <div class="ds-owner">European Commission · DG REGIO</div>
+          <div class="ds-desc">Regional economic time-series across NUTS1/2/3 + metro areas.</div>
+          <div class="ds-meta"><span class="ds-tag">≈ CC-BY</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">bfs_gdp_and_population</div>
+          <div class="ds-owner">Swiss Federal Statistics Office</div>
+          <div class="ds-desc">CH-specific population &amp; GDP.</div>
+          <div class="ds-meta"><span class="ds-tag">custom</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">ghg_emissions</div>
+          <div class="ds-owner">European Environment Agency</div>
+          <div class="ds-desc">National GHG inventories reported under the Governance Regulation. Sets carbon-budget baselines.</div>
+          <div class="ds-meta"><span class="ds-tag lic">CC-BY-4.0</span><span class="ds-tag iberia">PT · ES</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== I · RENEWABLE & STORAGE POTENTIALS ===== -->
+    <div class="cat-group">
+      <div class="cat-group-head">
+        <span class="num">I</span>
+        <h3>Renewable, storage &amp; CO<sub>2</sub> potentials</h3>
+        <span class="count">4 sources</span>
+      </div>
+      <div class="ds-grid">
+        <div class="ds">
+          <div class="ds-name">enspreso_biomass</div>
+          <div class="ds-owner">JRC · ENSPRESO2</div>
+          <div class="ds-desc">EU-28 biomass potentials at NUTS0 / NUTS2 / 1 km grid: agriculture, forestry, waste. Years 2010-2050, three scenarios (low / med / high). Re-projected onto PyPSA-Eur regions by area overlap.</div>
+          <div class="ds-meta"><span class="ds-tag lic">CC-BY-4.0</span><span class="ds-tag iberia">PT · ES</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">h2_salt_caverns</div>
+          <div class="ds-owner">Caglayan et al.</div>
+          <div class="ds-desc">Technical potential for hydrogen storage in salt caverns (GWh/km²). Iberia is salt-cavern-poor &mdash; PT &amp; ES will likely store H<sub>2</sub> chemically or as ammonia instead.</div>
+          <div class="ds-meta"><span class="ds-tag lic">CC-BY-4.0</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">aquifer_data</div>
+          <div class="ds-owner">BGR · Hydrogeological Map of Europe</div>
+          <div class="ds-desc">Groundwater &amp; aquifer characteristics. Used for geothermal and CO<sub>2</sub> storage suitability.</div>
+          <div class="ds-meta"><span class="ds-tag">use-only</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">co2stop</div>
+          <div class="ds-owner">JRC · CO2StoP</div>
+          <div class="ds-desc">European CO<sub>2</sub> sequestration potential: storage units, traps, depleted fields, saline aquifers.</div>
+          <div class="ds-meta"><span class="ds-tag">2011/833/EU</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== J · COSTS & PRICES ===== -->
+    <div class="cat-group">
+      <div class="cat-group-head">
+        <span class="num">J</span>
+        <h3>Costs &amp; prices</h3>
+        <span class="count">3 sources</span>
+      </div>
+      <div class="ds-grid">
+        <div class="ds">
+          <div class="ds-name">costs (technology-data)</div>
+          <div class="ds-owner">PyPSA technology-data project</div>
+          <div class="ds-desc">CAPEX, OPEX, lifetime, efficiency, learning rates for every technology &mdash; 2020 to 2050. The economics layer of every optimisation.</div>
+          <div class="ds-meta"><span class="ds-tag lic">CC-BY-4.0</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">worldbank_commodity_prices</div>
+          <div class="ds-owner">World Bank Pink Sheet</div>
+          <div class="ds-desc">Monthly historical commodity prices: coal, gas, oil, biomass feedstocks.</div>
+          <div class="ds-meta"><span class="ds-tag lic">CC-BY-4.0</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">instrat_co2_prices</div>
+          <div class="ds-owner">Instrat (energy.instrat.pl)</div>
+          <div class="ds-desc">EU-ETS CO<sub>2</sub> allowance prices. Baseline for the carbon-price layer.</div>
+          <div class="ds-meta"><span class="ds-tag">unknown</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== K · TRANSPORT, HEAT, OTHER ===== -->
+    <div class="cat-group">
+      <div class="cat-group-head">
+        <span class="num">K</span>
+        <h3>Transport, heat &amp; other inputs</h3>
+        <span class="count">7 sources</span>
+      </div>
+      <div class="ds-grid">
+        <div class="ds">
+          <div class="ds-name">emobility</div>
+          <div class="ds-owner">BASt (DE)</div>
+          <div class="ds-desc">Motor- and passenger-vehicle counts. Used for EV-fleet calibration.</div>
+          <div class="ds-meta"><span class="ds-tag lic">CC-BY-4.0</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">mobility_profiles</div>
+          <div class="ds-owner">BASt (DE)</div>
+          <div class="ds-desc">Hourly vehicle activity profiles by road and vehicle type. Smart-charging shapes.</div>
+          <div class="ds-meta"><span class="ds-tag lic">CC-BY-4.0</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">bfs_road_vehicle_stock</div>
+          <div class="ds-owner">Swiss Federal Statistics Office</div>
+          <div class="ds-desc">Swiss vehicle stock (separate from BASt because CH is non-EU).</div>
+          <div class="ds-meta"><span class="ds-tag">custom</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">attributed_ports</div>
+          <div class="ds-owner">World Bank Group</div>
+          <div class="ds-desc">International ports with name, capacity, function. Used to site shipping fuel demand and imports.</div>
+          <div class="ds-meta"><span class="ds-tag lic">CC-BY-4.0</span><span class="ds-tag iberia">PT · ES</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">dh_areas</div>
+          <div class="ds-owner">Fraunhofer ISI</div>
+          <div class="ds-desc">District-heating area shapes. Iberia has minimal DH, so most heat goes to individual heat pumps.</div>
+          <div class="ds-meta"><span class="ds-tag lic">CC-BY-4.0</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">geothermal_heat_utilisation_potentials</div>
+          <div class="ds-owner">Fraunhofer ISI</div>
+          <div class="ds-desc">Potentials for direct geothermal heat use.</div>
+          <div class="ds-meta"><span class="ds-tag lic">CC-BY-4.0</span></div>
+        </div>
+        <div class="ds">
+          <div class="ds-name">nitrogen_statistics</div>
+          <div class="ds-owner">USGS</div>
+          <div class="ds-desc">Global nitrogen / ammonia statistics. Calibrates ammonia industry sub-model.</div>
+          <div class="ds-meta"><span class="ds-tag lic">Public domain</span></div>
+        </div>
+      </div>
+    </div>
+
+    <p class="small" style="text-align:center;margin-top:3rem;color:var(--ink-mute);">
+      Every dataset is versioned in <span class="mono">data/versions.csv</span> with <span class="mono">primary</span>, <span class="mono">archive</span> or <span class="mono">build</span> source types &mdash; reproducibility is enforced even when the <span class="mono">latest</span> tag is used.
+    </p>
+  </div>
+</section>
+
+<!-- ===================================================
+     PIPELINE TRANSFORMATIONS
+     =================================================== -->
+<section id="pipeline" style="background: linear-gradient(180deg, var(--bg) 0%, #0a0c10 50%, var(--bg) 100%);">
+  <div class="wrap">
+    <div class="section-num">02 · Transformations</div>
+    <div class="pipe-intro">
+      <div><h2>From raw bytes<br>to a solvable network.</h2></div>
+      <div>
+        <p style="font-size:1.1rem;color:var(--ink-dim);">
+          The workflow is orchestrated by <span class="mono" style="color:var(--ink)">snakemake</span>: each box below is one or more rules.
+          Inputs flow downward. Outputs are <span class="mono" style="color:var(--cyan)">.nc</span>,
+          <span class="mono" style="color:var(--cyan)">.geojson</span>, <span class="mono" style="color:var(--cyan)">.csv</span>
+          and <span class="mono" style="color:var(--cyan)">.tiff</span> files.
+          The whole chain converges at <span class="mono" style="color:var(--amber)">prepare_network</span>, which produces the
+          <em>solvable</em> PyPSA network — a single NetCDF file that the optimiser consumes.
+        </p>
+      </div>
+    </div>
+
+    <!-- STAGE 01 -->
+    <div class="stage">
+      <span class="stage-num">01</span>
+      <h3>
+        <small>retrieve_* · downloads</small>
+        Pull the bundles.
+      </h3>
+      <div class="body">
+        <p>Snakemake retrieve rules fetch every dataset from its primary URL or from the Zenodo / data.pypsa.org archive snapshot. The versioning registry (<span class="mono">data/versions.csv</span>) pins each download. Bundles too large for git ship as zipped archives.</p>
+      </div>
+      <div class="rules">
+        <span class="rule">retrieve_databundle</span>
+        <span class="rule">retrieve_cutout</span>
+        <span class="rule">retrieve_osm_data</span>
+        <span class="rule">retrieve_eurostat_data</span>
+        <span class="rule">retrieve_jrc_idees</span>
+        <span class="rule">retrieve_gas_infrastructure_data</span>
+        <span class="rule">retrieve_gem_*</span>
+        <span class="rule">retrieve_powerplants</span>
+        <span class="rule">retrieve_cost_data</span>
+        <span class="rule">retrieve_hotmaps</span>
+        <span class="rule">retrieve_country_runoff</span>
+      </div>
+    </div>
+
+    <!-- STAGE 02 -->
+    <div class="stage">
+      <span class="stage-num">02</span>
+      <h3>
+        <small>build_cutout · atlite</small>
+        Cut a weather slab.
+      </h3>
+      <div class="body">
+        <p>Using the <a href="https://atlite.readthedocs.io">atlite</a> library, ERA5 reanalysis is downloaded for the model bounding box and merged with SARAH-3 satellite irradiation (which overrides ERA5's solar fields). The output is a multidimensional NetCDF "cutout" indexed by <span class="mono">time, y, x</span> &mdash; covering pressure, temperature, soil temperature, 100 m wind speed, runoff, direct/diffuse/TOA influx, albedo and roughness.</p>
+      </div>
+      <div class="io">
+        <span><b>in</b>·</span><span class="v">CDS API · EUMETSAT CM SAF</span>
+        <span><b>out</b>·</span><span class="v"><code>cutouts/europe-2013-sarah3-era5.nc</code></span>
+        <span><b>iberia</b>·</span><span class="v">bbox ≈ <code>(-10.0,&nbsp;35.5,&nbsp;4.5,&nbsp;44.5)</code> &mdash; ~700 × 1100 grid cells at 0.3°</span>
+      </div>
+    </div>
+
+    <!-- STAGE 03 -->
+    <div class="stage">
+      <span class="stage-num">03</span>
+      <h3>
+        <small>build_shapes · build_osm_boundaries · build_bidding_zones</small>
+        Draw the regions.
+      </h3>
+      <div class="body">
+        <p>GeoJSONs are emitted for country shapes (with point-of-view variants for disputed borders), exclusive economic zones, NUTS3 administrative units and OSM ADM1 polygons where NUTS is unavailable. Bidding-zone geometries are merged from Electricity Maps and entsoe-py, with manual TYNDP fixups (Crete split from GR, southern Norwegian zones merged).</p>
+      </div>
+      <div class="io">
+        <span><b>in</b>·</span><span class="v">eu_nuts2021 · eez · osm_boundaries · bidding_zones_*</span>
+        <span><b>out</b>·</span><span class="v"><code>country_shapes.geojson</code>, <code>offshore_shapes.geojson</code>, <code>nuts3_shapes.geojson</code>, <code>bidding_zones.geojson</code></span>
+      </div>
+    </div>
+
+    <!-- STAGE 04 -->
+    <div class="stage">
+      <span class="stage-num">04</span>
+      <h3>
+        <small>clean_osm_data · build_osm_network · base_network</small>
+        Build the grid topology.
+      </h3>
+      <div class="body">
+        <p>Raw OSM features (lines, cables, substations) are cleaned: voltage / circuits / cables / wires / frequency columns parsed, semicolon-separated cells split into rows, capacities distributed proportionally to circuit splits, line endings attached to substations. The cleaned features become a PyPSA <strong>base network</strong> with HVAC ≥ 220 kV lines, HVDC links, transformers, and Voronoi cells assigning every point on the map to its nearest substation.</p>
+      </div>
+      <div class="io">
+        <span><b>in</b>·</span><span class="v">osm · country_shapes</span>
+        <span><b>out</b>·</span><span class="v"><code>networks/base.nc</code> &mdash; ≈ 3000 substations, 6600 HVAC lines, 70 HVDC links across Europe</span>
+      </div>
+    </div>
+
+    <!-- STAGE 05 -->
+    <div class="stage">
+      <span class="stage-num">05</span>
+      <h3>
+        <small>build_natura · build_ship_raster</small>
+        Pre-render the exclusion masks.
+      </h3>
+      <div class="body">
+        <p>Natura 2000 protected-area polygons are rasterised to the cutout grid (much faster than per-cell vector intersection). The World Bank ship-density raster is downsampled to the same grid. Both become inputs to the next-stage land-eligibility analysis.</p>
+      </div>
+      <div class="rules">
+        <span class="rule">build_natura</span>
+        <span class="rule">build_ship_raster</span>
+      </div>
+    </div>
+
+    <!-- STAGE 06 -->
+    <div class="stage">
+      <span class="stage-num">06</span>
+      <h3>
+        <small>build_transmission_projects · build_line_rating</small>
+        Layer planned grid &amp; dynamic ratings.
+      </h3>
+      <div class="body">
+        <p>TYNDP and other configured transmission projects are concatenated, deduplicated, and converted into new-line / new-link / adjust-line / adjust-link / new-bus CSVs. In parallel, dynamic line ratings (DLR) are computed: a heat-balance model uses ERA5 wind &amp; temperature to set hourly <span class="mono">s_max_pu</span> per line &mdash; net of resistive heating, solar gain and convective cooling.</p>
+      </div>
+      <div class="rules">
+        <span class="rule">build_transmission_projects</span>
+        <span class="rule">build_line_rating</span>
+        <span class="rule">add_transmission_projects_and_dlr</span>
+      </div>
+    </div>
+
+    <!-- STAGE 07 -->
+    <div class="stage">
+      <span class="stage-num">07</span>
+      <h3>
+        <small>simplify_network</small>
+        Collapse to one voltage.
+      </h3>
+      <div class="body">
+        <p>The multi-voltage AC network is electrically equivalenced to a single 380 kV layer, transformers are absorbed, multi-hop HVDC routes are reduced to single links, and stub branches with no demand or generation are pruned. The output is a topologically minimal network that survives spatial clustering reliably.</p>
+      </div>
+      <div class="io">
+        <span><b>in</b>·</span><span class="v"><code>base.nc</code></span>
+        <span><b>out</b>·</span><span class="v"><code>networks/base_s.nc</code> · <code>busmap_base_s.csv</code> · <code>regions_onshore_base.geojson</code> · <code>regions_offshore_base.geojson</code></span>
+      </div>
+    </div>
+
+    <!-- STAGE 08 -->
+    <div class="stage">
+      <span class="stage-num">08</span>
+      <h3>
+        <small>cluster_network</small>
+        K-means down to N zones.
+      </h3>
+      <div class="body">
+        <p>The simplified network is clustered into a user-specified number of zones using k-means on substation positions weighted by an electrical metric. Buses, lines, transformers and regions all collapse onto the cluster representatives. Resolutions of 37, 128, 256 and 512 are standard test cases &mdash; whole-Europe runs typically pick something in <strong>50&ndash;250</strong>.</p>
+      </div>
+      <div class="io">
+        <span><b>in</b>·</span><span class="v"><code>base_s.nc</code> · hac_features</span>
+        <span><b>out</b>·</span><span class="v"><code>networks/base_s_{N}.nc</code> · <code>regions_onshore_base_s_{N}.geojson</code></span>
+        <span><b>iberia</b>·</span><span class="v">at <code>N=128</code>, ≈ 8 PT + ≈ 14 ES onshore nodes; at <code>N=512</code>, ≈ 30 + 55</span>
+      </div>
+    </div>
+
+    <!-- STAGE 09 -->
+    <div class="stage">
+      <span class="stage-num">09</span>
+      <h3>
+        <small>determine_availability_matrix</small>
+        Where can you actually build?
+      </h3>
+      <div class="body">
+        <p>For each clustered region and each technology (solar PV, onshore wind, offshore-AC wind, offshore-DC wind), a fine-grained land-eligibility analysis runs against CORINE / LUISA classes (urban, forest, water removed), Natura 2000, GEBCO bathymetry (offshore depth limit), the ship-density raster, and the EEZ. The output is an <span class="mono">availability_matrix</span> per technology &mdash; the per-grid-cell share of land that is actually buildable.</p>
+      </div>
+      <div class="io">
+        <span><b>in</b>·</span><span class="v">cutout · corine · luisa · natura · gebco · ship_raster · regions_*</span>
+        <span><b>out</b>·</span><span class="v"><code>resources/availability_matrix_{clusters}_{technology}.nc</code></span>
+      </div>
+    </div>
+
+    <!-- STAGE 10 -->
+    <div class="stage">
+      <span class="stage-num">10</span>
+      <h3>
+        <small>build_renewable_profiles</small>
+        Hourly capacity factors per node.
+      </h3>
+      <div class="body">
+        <p>The availability matrix is multiplied with the local capacity factor (computed by atlite from the cutout wind / solar data) to produce a generator <em>layout</em> per region. Generators are binned into resource classes (best 20% / next 20% / etc.), and atlite is rerun to extract an hourly availability time-series and total installable capacity for each (bus, technology, resource&nbsp;class). The maximum installable potential <span class="mono">p_nom_max</span> is the sum across grid cells.</p>
+      </div>
+      <div class="io">
+        <span><b>out</b>·</span><span class="v"><code>resources/profile_{tech}.nc</code> · dims: <span class="mono">(year, bus, bin, time)</span></span>
+        <span><b>iberia</b>·</span><span class="v">solar CF ≈ 0.20-0.24 (best in EU); onshore wind in NW ES / coastal PT ≈ 0.35-0.45; offshore floating (PT) up to 0.55</span>
+      </div>
+    </div>
+
+    <!-- STAGE 11 -->
+    <div class="stage">
+      <span class="stage-num">11</span>
+      <h3>
+        <small>build_hydro_profile</small>
+        Reservoir inflow series.
+      </h3>
+      <div class="body">
+        <p>Daily runoff from the cutout is integrated over each country's catchment, calibrated against EIA historic hydro generation and rescaled by the <span class="mono">country_runoff</span> dataset for years outside the EIA window. The output is hourly inflow (MW) per country to dam reservoirs and pumped-hydro.</p>
+      </div>
+      <div class="io">
+        <span><b>out</b>·</span><span class="v"><code>resources/profile_hydro.nc</code> &mdash; <span class="mono">(countries, time)</span></span>
+        <span><b>iberia</b>·</span><span class="v">PT hydro capacity ≈ 7 GW reservoir + pumped; ES ≈ 17 GW &mdash; both highly seasonal, wet-winter dependent</span>
+      </div>
+    </div>
+
+    <!-- STAGE 12 -->
+    <div class="stage">
+      <span class="stage-num">12</span>
+      <h3>
+        <small>build_powerplants</small>
+        Map conventional fleet to buses.
+      </h3>
+      <div class="body">
+        <p>The <span class="mono">powerplantmatching</span> database (consolidating GPPDT, JRC, OPSD, GEO, BEYONDCOAL, IRENASTAT, CARMA) is filtered per the config (<span class="mono">powerplants_filter</span>), augmented with custom entries (<span class="mono">custom_powerplants.csv</span>), and each plant is snapped to its nearest clustered bus. Optional "everywhere" carriers add zero-capacity placeholder plants at every node for future expansion.</p>
+      </div>
+      <div class="io">
+        <span><b>out</b>·</span><span class="v"><code>resources/powerplants_s_{clusters}.csv</code> &mdash; name, fuel, tech, country, capacity, commissioning year, lat/lon, bus</span>
+        <span><b>iberia</b>·</span><span class="v">~80 ES conventional units (gas CC, nuclear: Almaraz · Ascó · Cofrentes · Trillo · Vandellós, coal closures); PT: Sines &amp; Pego retired, Tapada &amp; Lares CCGT</span>
+      </div>
+    </div>
+
+    <!-- STAGE 13 -->
+    <div class="stage">
+      <span class="stage-num">13</span>
+      <h3>
+        <small>build_electricity_demand · build_electricity_demand_base · build_gdp_pop_non_nuts3</small>
+        Demand as a time series.
+      </h3>
+      <div class="body">
+        <p>Country-level OPSD / ENTSO-E hourly load is gap-filled (linearly for short gaps, period-copy for long gaps). Synthetic weather-correlated demand backfills any country-year missing. The country total is then disaggregated onto buses top-down using NUTS3 population × GDP per capita weights (with the JRC Energy Atlas as a finer 1 km raster fallback).</p>
+      </div>
+      <div class="io">
+        <span><b>in</b>·</span><span class="v">opsd_electricity_demand · entsoe_electricity_demand · synthetic · nuts3_population · gdp_per_capita</span>
+        <span><b>out</b>·</span><span class="v">load CSV at country level → bus-level load attached in <span class="mono">add_electricity</span></span>
+      </div>
+    </div>
+
+    <!-- STAGE 14 -->
+    <div class="stage">
+      <span class="stage-num">14</span>
+      <h3>
+        <small>build_monthly_prices</small>
+        Fuel &amp; CO<sub>2</sub> price track.
+      </h3>
+      <div class="body">
+        <p>Monthly World Bank commodity prices and Instrat EU-ETS CO<sub>2</sub> allowance prices are aligned to the modelled year and converted to €/MWh<sub>th</sub> and €/tCO<sub>2</sub>.</p>
+      </div>
+    </div>
+
+    <!-- STAGE 15 -->
+    <div class="stage">
+      <span class="stage-num">15</span>
+      <h3>
+        <small>add_electricity</small>
+        Compose the electricity network.
+      </h3>
+      <div class="body">
+        <p>The keystone rule. Onto the clustered network, <span class="mono">add_electricity</span> attaches:</p>
+        <ul style="color:var(--ink-dim);padding-left:1.2rem;">
+          <li>today's transmission topology &amp; transfer capacity (incl. under-construction lines if configured),</li>
+          <li>today's thermal &amp; hydro generators with their capacities &amp; commissioning years,</li>
+          <li>bus-level load time series,</li>
+          <li>extendable generators (initial capacity = 0) for PV, onshore-wind, offshore-AC-wind, offshore-DC-wind, OCGT, CCGT &mdash; each with hourly capacity factors from stage 10,</li>
+          <li>extendable storage: H<sub>2</sub> &amp; battery as <span class="mono">StorageUnit</span>s, or as <span class="mono">Store</span>+<span class="mono">Link</span>+<span class="mono">Link</span> trios with independent charge / discharge / energy investment variables.</li>
+        </ul>
+      </div>
+      <div class="io">
+        <span><b>out</b>·</span><span class="v"><code>networks/base_s_{clusters}_elec.nc</code> &mdash; a complete electricity PyPSA network</span>
+      </div>
+    </div>
+
+    <!-- STAGE 16 -->
+    <div class="stage">
+      <span class="stage-num">16</span>
+      <h3>
+        <small>prepare_network</small>
+        Apply policy &amp; reduce time.
+      </h3>
+      <div class="body">
+        <p>Carbon budgets, carbon prices, N&minus;1 security margins, transmission expansion cost/volume caps, and temporal resolution reduction (averaging or <span class="mono">tsam</span> segmentation) are applied here. The output is the file the solver actually reads.</p>
+      </div>
+      <div class="io">
+        <span><b>out</b>·</span><span class="v"><code>networks/base_s_{clusters}_elec_{opts}.nc</code></span>
+      </div>
+    </div>
+
+    <!-- STAGE 17 - sector -->
+    <div class="stage">
+      <span class="stage-num">17</span>
+      <h3>
+        <small>sector coupling · prepare_sector_network</small>
+        Heat, transport, industry, gas, H<sub>2</sub>, CO<sub>2</sub>.
+      </h3>
+      <div class="body">
+        <p>If sector coupling is enabled, additional layers wire in: residential / services heat (heat pumps with time-varying COP from cutout temperatures, gas/oil boilers, resistive, solar thermal, district heating), road / rail / shipping / aviation transport (EV fleets with mobility-profile constraints, H<sub>2</sub> vehicles, ammonia / methanol / FT shipping), industrial process heat &amp; feedstocks (DRI steel, methanol/ammonia/HVC chemistry from JRC-IDEES + Hotmaps + GEM steel/cement), the methane and hydrogen pipeline networks (SciGRID gas + Europe Gas Tracker, with retrofit options to H<sub>2</sub>), and CO<sub>2</sub> capture / transport / storage (DAC, point sources, CO<sub>2</sub>StoP sites, optional pipeline build-out).</p>
+      </div>
+      <div class="rules">
+        <span class="rule">build_heat_demand</span>
+        <span class="rule">build_cop_profiles</span>
+        <span class="rule">build_transport_demand</span>
+        <span class="rule">build_industrial_demand</span>
+        <span class="rule">build_biomass_potentials</span>
+        <span class="rule">build_gas_network</span>
+        <span class="rule">build_gas_input_locations</span>
+        <span class="rule">cluster_gas_network</span>
+        <span class="rule">build_co2_sequestration_potentials</span>
+        <span class="rule">build_salt_cavern_potentials</span>
+        <span class="rule">prepare_sector_network</span>
+      </div>
+    </div>
+
+    <!-- STAGE 18 -->
+    <div class="stage">
+      <span class="stage-num">18</span>
+      <h3>
+        <small>solve_network · solve_sector_network</small>
+        Optimise.
+      </h3>
+      <div class="body">
+        <p>A linear (or mixed-integer) programme is handed to HiGHS / Gurobi / CPLEX. Objective: minimise total annualised system cost. Decision variables: line / link capacity expansion, generator capacity expansion, storage capacities, hourly dispatch of everything. Constraints: power balance per bus and hour, technical limits, transmission, CO<sub>2</sub> caps, policy. Result: an investment + dispatch plan &mdash; capacities, flows, prices, emissions &mdash; written back into the same NetCDF schema.</p>
+      </div>
+      <div class="io">
+        <span><b>out</b>·</span><span class="v"><code>results/{run}/networks/base_s_{clusters}_elec_{opts}_solved.nc</code></span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ===================================================
+     IBERIA EXAMPLE
+     =================================================== -->
+<section id="iberia">
+  <div class="wrap">
+    <div class="section-num">03 · Iberia · A worked example</div>
+    <h2 style="margin-bottom:3rem;">When the model looks at <em style="color:var(--hot);font-style:italic;">Portugal &amp; Spain</em>...</h2>
+
+    <div class="iberia-grid">
+      <!-- IBERIA SVG SCHEMATIC -->
+      <div class="iberia-map">
+        <svg viewBox="0 0 480 540" xmlns="http://www.w3.org/2000/svg">
+          <!-- background grid -->
+          <defs>
+            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1d2029" stroke-width="0.5"/>
+            </pattern>
+            <filter id="glow"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+          <rect width="480" height="540" fill="url(#grid)"/>
+
+          <!-- coordinate label -->
+          <text x="15" y="25" font-family="JetBrains Mono, monospace" font-size="9" fill="#6b6857">CUTOUT BBOX · (-10.0, 35.5, 4.5, 44.5)</text>
+          <text x="15" y="525" font-family="JetBrains Mono, monospace" font-size="9" fill="#6b6857">N=128 · clustered base_s_128.nc</text>
+
+          <!-- Iberian peninsula outline (stylised) -->
+          <path d="M 80 130
+                   Q 90 110, 130 105
+                   L 200 100
+                   Q 260 90, 320 95
+                   L 380 110
+                   Q 410 130, 410 170
+                   L 415 230
+                   Q 405 280, 380 320
+                   L 360 360
+                   Q 340 400, 305 410
+                   L 250 430
+                   Q 200 440, 160 425
+                   L 130 415
+                   Q 95 395, 90 360
+                   L 85 290
+                   Q 75 220, 80 130 Z"
+                fill="#181b24" stroke="#2a2c34" stroke-width="1.5"/>
+
+          <!-- Portugal outline (left strip) -->
+          <path d="M 80 130
+                   Q 90 110, 110 110
+                   L 125 130
+                   L 130 200
+                   Q 125 280, 130 360
+                   L 135 410
+                   Q 110 420, 95 395
+                   L 85 290
+                   Q 75 220, 80 130 Z"
+                fill="#1f2229" stroke="#3a3d47" stroke-width="1"/>
+
+          <!-- Borders label -->
+          <text x="98" y="260" font-family="Fraunces, serif" font-size="11" fill="#a39e8c" font-style="italic">PT</text>
+          <text x="240" y="260" font-family="Fraunces, serif" font-size="14" fill="#a39e8c" font-style="italic">ES</text>
+
+          <!-- BUSES (substations / clustered nodes) -->
+          <g id="buses">
+            <!-- PT buses -->
+            <circle cx="105" cy="180" r="3" fill="#ffb000" filter="url(#glow)"/><text x="112" y="183" font-family="JetBrains Mono, monospace" font-size="7" fill="#a39e8c">Porto</text>
+            <circle cx="103" cy="245" r="3" fill="#ffb000" filter="url(#glow)"/><text x="110" y="248" font-family="JetBrains Mono, monospace" font-size="7" fill="#a39e8c">Lisboa</text>
+            <circle cx="106" cy="310" r="3" fill="#ffb000" filter="url(#glow)"/><text x="113" y="313" font-family="JetBrains Mono, monospace" font-size="7" fill="#a39e8c">Sines</text>
+            <circle cx="115" cy="375" r="3" fill="#ffb000" filter="url(#glow)"/><text x="122" y="378" font-family="JetBrains Mono, monospace" font-size="7" fill="#a39e8c">Faro</text>
+            <circle cx="118" cy="155" r="2.5" fill="#ffb000"/>
+            <circle cx="120" cy="215" r="2.5" fill="#ffb000"/>
+            <circle cx="120" cy="280" r="2.5" fill="#ffb000"/>
+            <circle cx="125" cy="345" r="2.5" fill="#ffb000"/>
+
+            <!-- ES buses -->
+            <circle cx="200" cy="130" r="3" fill="#ffb000" filter="url(#glow)"/><text x="195" y="123" font-family="JetBrains Mono, monospace" font-size="7" fill="#a39e8c">A Coruña</text>
+            <circle cx="260" cy="125" r="3" fill="#ffb000" filter="url(#glow)"/><text x="265" y="120" font-family="JetBrains Mono, monospace" font-size="7" fill="#a39e8c">Bilbao</text>
+            <circle cx="335" cy="135" r="3" fill="#ffb000" filter="url(#glow)"/><text x="340" y="130" font-family="JetBrains Mono, monospace" font-size="7" fill="#a39e8c">Barcelona</text>
+            <circle cx="240" cy="195" r="3" fill="#ffb000" filter="url(#glow)"/><text x="248" y="198" font-family="JetBrains Mono, monospace" font-size="7" fill="#a39e8c">Valladolid</text>
+            <circle cx="305" cy="200" r="3" fill="#ffb000" filter="url(#glow)"/><text x="312" y="203" font-family="JetBrains Mono, monospace" font-size="7" fill="#a39e8c">Zaragoza</text>
+            <circle cx="240" cy="265" r="3.5" fill="#ffb000" filter="url(#glow)"/><text x="248" y="268" font-family="JetBrains Mono, monospace" font-size="7" fill="#a39e8c">Madrid</text>
+            <circle cx="320" cy="290" r="3" fill="#ffb000" filter="url(#glow)"/><text x="328" y="293" font-family="JetBrains Mono, monospace" font-size="7" fill="#a39e8c">Valencia</text>
+            <circle cx="180" cy="320" r="3" fill="#ffb000" filter="url(#glow)"/><text x="155" y="335" font-family="JetBrains Mono, monospace" font-size="7" fill="#a39e8c">Cáceres</text>
+            <circle cx="260" cy="345" r="3" fill="#ffb000" filter="url(#glow)"/><text x="268" y="348" font-family="JetBrains Mono, monospace" font-size="7" fill="#a39e8c">Córdoba</text>
+            <circle cx="195" cy="390" r="3" fill="#ffb000" filter="url(#glow)"/><text x="160" y="402" font-family="JetBrains Mono, monospace" font-size="7" fill="#a39e8c">Sevilla</text>
+            <circle cx="290" cy="390" r="3" fill="#ffb000" filter="url(#glow)"/><text x="297" y="395" font-family="JetBrains Mono, monospace" font-size="7" fill="#a39e8c">Murcia</text>
+
+            <!-- small unnamed buses -->
+            <circle cx="220" cy="155" r="2" fill="#ffb000" opacity="0.7"/>
+            <circle cx="280" cy="170" r="2" fill="#ffb000" opacity="0.7"/>
+            <circle cx="160" cy="240" r="2" fill="#ffb000" opacity="0.7"/>
+            <circle cx="270" cy="230" r="2" fill="#ffb000" opacity="0.7"/>
+            <circle cx="345" cy="170" r="2" fill="#ffb000" opacity="0.7"/>
+            <circle cx="370" cy="220" r="2" fill="#ffb000" opacity="0.7"/>
+            <circle cx="225" cy="310" r="2" fill="#ffb000" opacity="0.7"/>
+            <circle cx="300" cy="335" r="2" fill="#ffb000" opacity="0.7"/>
+            <circle cx="225" cy="365" r="2" fill="#ffb000" opacity="0.7"/>
+          </g>
+
+          <!-- TRANSMISSION LINES (stylised) -->
+          <g stroke="#54c5e8" stroke-width="0.7" fill="none" opacity="0.65">
+            <!-- PT internal -->
+            <path d="M 105 180 L 103 245 L 106 310 L 115 375"/>
+            <path d="M 105 180 L 118 155"/>
+            <path d="M 103 245 L 120 215"/>
+            <path d="M 106 310 L 120 280"/>
+            <!-- PT-ES interconnections (4 main) -->
+            <path d="M 118 155 L 200 130"/>
+            <path d="M 120 215 L 240 195"/>
+            <path d="M 120 280 L 180 320"/>
+            <path d="M 125 345 L 195 390"/>
+            <!-- ES internal -->
+            <path d="M 200 130 L 260 125 L 335 135"/>
+            <path d="M 260 125 L 240 195 L 305 200 L 335 135"/>
+            <path d="M 200 130 L 240 195"/>
+            <path d="M 240 195 L 240 265"/>
+            <path d="M 305 200 L 320 290"/>
+            <path d="M 240 265 L 320 290"/>
+            <path d="M 240 265 L 260 345"/>
+            <path d="M 240 265 L 180 320"/>
+            <path d="M 180 320 L 195 390"/>
+            <path d="M 260 345 L 290 390"/>
+            <path d="M 320 290 L 290 390"/>
+            <path d="M 240 265 L 305 200"/>
+            <path d="M 335 135 L 345 170 L 370 220"/>
+            <path d="M 305 200 L 345 170"/>
+          </g>
+
+          <!-- HVDC to Morocco -->
+          <g stroke="#ff5e3a" stroke-width="1.2" stroke-dasharray="3,3" fill="none">
+            <path d="M 195 390 L 195 470"/>
+          </g>
+          <text x="200" y="470" font-family="JetBrains Mono, monospace" font-size="7" fill="#ff5e3a">→ MA (HVDC)</text>
+
+          <!-- France interconnection (Pyrenees) -->
+          <g stroke="#ff5e3a" stroke-width="1.4" fill="none">
+            <path d="M 260 125 L 330 60"/>
+            <path d="M 335 135 L 395 75"/>
+          </g>
+          <text x="340" y="60" font-family="JetBrains Mono, monospace" font-size="8" fill="#ff5e3a">→ FR</text>
+
+          <!-- LNG terminals -->
+          <g>
+            <rect x="100" y="306" width="8" height="8" fill="#b39cf2" stroke="#0d0f14" stroke-width="0.8"/>
+            <text x="55" y="313" font-family="JetBrains Mono, monospace" font-size="7" fill="#b39cf2">LNG Sines</text>
+            <rect x="256" y="121" width="8" height="8" fill="#b39cf2" stroke="#0d0f14" stroke-width="0.8"/>
+            <text x="245" y="115" font-family="JetBrains Mono, monospace" font-size="7" fill="#b39cf2">LNG Bilbao</text>
+            <rect x="331" y="131" width="8" height="8" fill="#b39cf2" stroke="#0d0f14" stroke-width="0.8"/>
+            <text x="335" y="158" font-family="JetBrains Mono, monospace" font-size="7" fill="#b39cf2">LNG Barcelona</text>
+            <rect x="195" y="386" width="8" height="8" fill="#b39cf2" stroke="#0d0f14" stroke-width="0.8"/>
+            <text x="200" y="385" font-family="JetBrains Mono, monospace" font-size="7" fill="#b39cf2">LNG Huelva</text>
+          </g>
+
+          <!-- Wind & solar tags -->
+          <g>
+            <text x="195" y="148" font-family="JetBrains Mono, monospace" font-size="6.5" fill="#8fc46a">⌖ wind+++</text>
+            <text x="220" y="305" font-family="JetBrains Mono, monospace" font-size="6.5" fill="#ffb000">☀ solar+++</text>
+            <text x="155" y="240" font-family="JetBrains Mono, monospace" font-size="6.5" fill="#ffb000">☀ solar++</text>
+            <text x="55" y="293" font-family="JetBrains Mono, monospace" font-size="6.5" fill="#54c5e8">~ offshore (float)</text>
+          </g>
+
+          <!-- pulse: capital -->
+          <circle cx="240" cy="265" r="6" fill="none" stroke="#ffb000" stroke-width="0.6" opacity="0.6" class="pulse-dot"/>
+          <circle cx="103" cy="245" r="5.5" fill="none" stroke="#ffb000" stroke-width="0.6" opacity="0.6" class="pulse-dot"/>
+
+          <!-- legend -->
+          <g transform="translate(15, 440)">
+            <circle cx="6" cy="6" r="3" fill="#ffb000"/>
+            <text x="15" y="9" font-family="JetBrains Mono, monospace" font-size="8" fill="#a39e8c">substation / bus</text>
+            <line x1="2" y1="22" x2="12" y2="22" stroke="#54c5e8" stroke-width="1"/>
+            <text x="15" y="25" font-family="JetBrains Mono, monospace" font-size="8" fill="#a39e8c">HVAC ≥ 220 kV</text>
+            <line x1="2" y1="38" x2="12" y2="38" stroke="#ff5e3a" stroke-width="1"/>
+            <text x="15" y="41" font-family="JetBrains Mono, monospace" font-size="8" fill="#a39e8c">interconnection</text>
+            <rect x="2" y="50" width="8" height="8" fill="#b39cf2"/>
+            <text x="15" y="58" font-family="JetBrains Mono, monospace" font-size="8" fill="#a39e8c">LNG terminal</text>
+          </g>
+        </svg>
+        <div class="cap">Schematic — not to scale. Real OSM network has ~120 PT+ES substations at full resolution.</div>
+      </div>
+
+      <!-- IBERIA FACTS -->
+      <div>
+        <div class="iberia-fact">
+          <h4>Geography</h4>
+          <p>Country shapes from <span class="mono" style="color:var(--amber)">eu_nuts2021</span> (NUTS0 → NUTS3). PT decomposes into 25 NUTS3 regions, ES into 59. EEZ from Marine Regions sets the offshore wind footprint &mdash; <span>vast for both, especially the Portuguese deep-water Atlantic</span>.</p>
+        </div>
+        <div class="iberia-fact">
+          <h4>Grid topology</h4>
+          <p>The OSM grid captures REN (PT) and REE (ES) ≥ 220 kV backbones, the four PT-ES interconnections (Vila Fria-Cartelle, Lindoso-Cartelle, Pocinho-Aldeadávila, Alqueva-Brovales), the two AC Pyrenees crossings to France, and the Spain-Morocco HVDC across the Strait. <span>Iberia is famously the "energy island" of Europe &mdash; cross-Pyrenees capacity sits around 2.8 GW.</span></p>
+        </div>
+        <div class="iberia-fact">
+          <h4>Renewables</h4>
+          <p>Cutout cells over Iberia produce some of the highest <strong>solar capacity factors in the EU</strong> (20-24% annual). Onshore wind in Galicia and the central Meseta hits 35-45%. Offshore wind is mostly floating territory (deep Atlantic shelf) and shows up in the DC-connected offshore tech.</p>
+        </div>
+        <div class="iberia-fact">
+          <h4>Hydro</h4>
+          <p>Inflow time series from ERA5 runoff, rescaled to EIA generation. <span>PT operates ~7 GW reservoir+pumped, ES ~17 GW &mdash; both highly seasonal, with the wet 2010 vs dry 2017 difference visible in <span class="mono">profile_hydro.nc</span>.</span></p>
+        </div>
+        <div class="iberia-fact">
+          <h4>Gas &amp; H<sub>2</sub></h4>
+          <p>SciGRID gas + GEM Europe Gas Tracker provide Sines, Huelva, Bilbao, Barcelona, Cartagena, Mugardos LNG terminals plus the Iberian pipeline network. The single, low-capacity link to France keeps Iberia <span>a near-island</span> on the gas side too &mdash; making the H2Med / BarMar corridor an interesting "extendable link" in scenario runs.</p>
+        </div>
+        <div class="iberia-fact">
+          <h4>Demand</h4>
+          <p>Hourly load from OPSD &amp; ENTSO-E (REE / REN feeds). Country totals are disaggregated by NUTS3 population × GDP per capita &mdash; concentrating load on <strong>Madrid, Barcelona, Valencia, Lisbon, Porto</strong>, with industrial pockets around Bilbao, Tarragona and Setúbal.</p>
+        </div>
+        <div class="iberia-fact">
+          <h4>Industry</h4>
+          <p>From Hotmaps and GEM trackers the model picks up ArcelorMittal in Asturias, cement plants across both countries, and large chemical sites in Tarragona, Huelva and Sines. These set fixed industrial heat &amp; electricity demand, plus hydrogen and CCS targets.</p>
+        </div>
+        <div class="iberia-fact">
+          <h4>Storage potentials</h4>
+          <p>Salt caverns from Caglayan et al. show very little potential under Iberia (no Zechstein basin). <span>The model therefore tends to favour battery + ammonia / methanol for long-duration storage in PT &amp; ES scenarios.</span></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================================================
+     OUTPUT
+     =================================================== -->
+<section id="output">
+  <div class="wrap">
+    <div class="section-num">04 · Output</div>
+    <h2>What you end up with.</h2>
+    <p style="max-width:760px;color:var(--ink-dim);font-size:1.1rem;margin-bottom:2.5rem;">
+      A single PyPSA NetCDF file holds the entire solved system. Buses, lines, links, generators, storage units,
+      stores, loads &mdash; with hourly time-series for dispatch and prices, and per-component
+      capacities. The result is queryable with the PyPSA Python API or any NetCDF tool.
+    </p>
+
+    <div class="output-tree">
+<span class="dir">results/iberia_run/</span>
+├── <span class="dir">networks/</span>
+│   ├── <span class="file">base.nc</span>                                  <span class="com"># raw OSM topology, EU-wide</span>
+│   ├── <span class="file">base_s.nc</span>                                <span class="com"># simplified to 380 kV equivalent</span>
+│   ├── <span class="file">base_s_128.nc</span>                            <span class="com"># clustered to 128 nodes</span>
+│   ├── <span class="file">base_s_128_elec.nc</span>                       <span class="com"># + generators, demand, storage</span>
+│   └── <span class="file">base_s_128_elec_Co2L-3H_solved.nc</span>        <span class="com"># solved: CO₂ cap, 3-hour resolution</span>
+├── <span class="dir">resources/</span>
+│   ├── <span class="file">profile_solar.nc</span>                         <span class="com"># (year, bus, bin, time)</span>
+│   ├── <span class="file">profile_onwind.nc</span>
+│   ├── <span class="file">profile_offwind-ac.nc</span>
+│   ├── <span class="file">profile_offwind-dc.nc</span>
+│   ├── <span class="file">profile_hydro.nc</span>
+│   ├── <span class="file">availability_matrix_128_solar.nc</span>
+│   ├── <span class="file">powerplants_s_128.csv</span>
+│   ├── <span class="file">regions_onshore_base_s_128.geojson</span>
+│   └── <span class="file">regions_offshore_base_s_128.geojson</span>
+├── <span class="dir">cutouts/</span>
+│   └── <span class="file">europe-2013-sarah3-era5.nc</span>
+└── <span class="dir">summaries/</span>
+    ├── <span class="file">capacities.csv</span>                           <span class="com"># MW per (country, carrier)</span>
+    ├── <span class="file">costs.csv</span>                                <span class="com"># €/yr per (country, carrier, kind)</span>
+    ├── <span class="file">energy.csv</span>                               <span class="com"># MWh per (country, carrier)</span>
+    └── <span class="file">prices.csv</span>                               <span class="com"># €/MWh per (bus, time)</span>
+    </div>
+
+    <p class="small" style="margin-top:2rem;color:var(--ink-mute);">
+      A typical Iberia-focused run with <span class="mono">N=128</span>, 3-hour temporal resolution, a 1990-baseline CO<sub>2</sub> cap and
+      sector coupling enabled solves in 15-60 minutes on a 32-core / 256 GB machine using HiGHS.
+    </p>
+  </div>
+</section>
+
+<!-- ===================================================
+     FOOTER
+     =================================================== -->
+<footer>
+  <div class="wrap">
+    <div>
+      <div class="label" style="margin-bottom:0.4rem;">Pipeline reference</div>
+      <p style="margin:0;">
+        PyPSA-Eur · maintained by TU Berlin / Department of Digital Transformation in Energy Systems<br>
+        <a href="https://pypsa-eur.readthedocs.io">pypsa-eur.readthedocs.io</a> · <a href="https://github.com/PyPSA/pypsa-eur">github.com/PyPSA/pypsa-eur</a>
+      </p>
+    </div>
+    <div>
+      <div class="label" style="margin-bottom:0.4rem;">Cite</div>
+      <p style="margin:0;font-style:italic;max-width:380px;">
+        Hörsch, Hofmann, Schlachtberger, Brown.<br>
+        "PyPSA-Eur: An open optimisation model of the European transmission system."<br>
+        <em>Energy Strategy Reviews</em>, 22, 2018.
+      </p>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
